@@ -740,7 +740,7 @@ establish_child_signal_handlers (void)
 #define EXEC "exec "
 
 int
-run_cmd(int fd, ...)
+run_cmd(int fd, const char *cmd0, const char *args_extra)
 {
 	pid_t pid;
 	sigset_t sigm, sigm_old;
@@ -807,16 +807,16 @@ run_cmd(int fd, ...)
 			
 			strcpy(cmd, EXEC);
 			c = &cmd[sizeof(EXEC)- 1];
-			ce = cmd + sizeof(cmd) - 1;
-			va_start(vls, fd);
-			while ( (s = va_arg(vls, const char *)) ) {
-				n = strlen(s);
-				if ( c + n + 1 >= ce ) break;
-				memcpy(c, s, n); c += n;
-				*c++ = ' ';
-			}
-			va_end(vls);
+			n = strlen(cmd0);
+			memcpy(c, cmd0, n);
+			c += n;
+			*c++ = ' ';
+			n = strlen(args_extra);
+			memcpy(c, args_extra, n);
+			c += n;
+			*c++ = ' ';
 			*c = '\0';
+
 		}
 		/* run extenral command */
 		fd_printf(STDERR_FILENO, "%s\n", &cmd[sizeof(EXEC) - 1]);
@@ -946,7 +946,7 @@ do_command (unsigned char c)
 			fd_printf(STO, "*** cannot read filename ***\r\n");
 			break;
 		}
-		run_cmd(tty_fd, xfr_cmd, fname, NULL);
+		run_cmd(tty_fd, xfr_cmd, fname);
 		free(fname);
 		break;
 	case KEY_BREAK:
